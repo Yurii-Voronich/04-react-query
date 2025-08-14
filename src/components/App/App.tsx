@@ -9,24 +9,27 @@ import Loader from "../Loader/Loader";
 import ErrorMessage from "../ErrorMessage/ErrorMessage";
 import { MovieModal } from "../MovieModal/MovieModal";
 import { useQuery } from "@tanstack/react-query";
+import ReactPaginate from "react-paginate";
 
 const App = () => {
   const [movie, setmovie] = useState("");
   const [selectedMovie, setselectedMovie] = useState<Movie | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["movies", movie],
-    queryFn: () => fetchMovies(movie),
+    queryKey: ["movies", movie, currentPage],
+    queryFn: () => fetchMovies(movie, currentPage),
     enabled: movie !== "",
   });
   useEffect(() => {
-    if (data && data.length === 0) {
+    if (data && data.results.length === 0) {
       toast.error("No movies found for your request.");
     }
   }, [data]);
 
   const onSubmit = (topic: string) => {
     setmovie(topic);
+    setCurrentPage(1);
   };
 
   const onSelect = (item: Movie) => {
@@ -40,13 +43,26 @@ const App = () => {
   return (
     <div className={css.app}>
       <SearchBar onSubmit={onSubmit} />
-      {data && data.length > 0 && (
-        <MovieGrid movies={data} onSelect={onSelect} />
+      {data && data.results.length > 0 && (
+        <MovieGrid movies={data.results} onSelect={onSelect} />
       )}
       {isLoading && <Loader />}
       {isError && <ErrorMessage />}
       {selectedMovie && selectedMovie !== null && (
         <MovieModal movie={selectedMovie} onClose={onClose} />
+      )}
+      {data && data.total_pages > 1 && (
+        <ReactPaginate
+          pageCount={data.total_pages}
+          pageRangeDisplayed={5}
+          marginPagesDisplayed={1}
+          onPageChange={({ selected }) => setCurrentPage(selected + 1)}
+          forcePage={currentPage - 1}
+          containerClassName={css.pagination}
+          activeClassName={css.active}
+          nextLabel="→"
+          previousLabel="←"
+        />
       )}
     </div>
   );

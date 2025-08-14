@@ -11,9 +11,15 @@ interface TMDBResponse {
   total_pages: number;
   total_results: number;
 }
-export default async function fetchMovies(topic: string): Promise<Movie[]> {
+export default async function fetchMovies(
+  topic: string,
+  page: number
+): Promise<TMDBResponse> {
   const res = await axios.get<TMDBResponse>("/search/movie", {
-    params: { query: topic },
+    params: {
+      query: topic,
+      page: page,
+    },
   });
-  return res.data.results;
+  return res.data;
 }
